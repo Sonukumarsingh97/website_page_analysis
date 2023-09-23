@@ -36,6 +36,24 @@ from website_sessions
 		and utm_source='gsearch'
         and utm_campaign='nonbrand';
 
+/* trande analysis to see the impact after bid down*/
+/* Based on conversion rate analysis manager decided to bid down for the gsearch nonbrand 
+Now will have to find out the impact of that, In this step will looke at the trend after bid down by week
+date limit 2012-05-10 */
+
+select
+     -- year(created_at) as yr,
+     -- week(created_at) as wk,
+     min(date(created_at)) as week_start_day,
+     count(distinct website_session_id) as sessions
+     from website_sessions
+     where created_at < '2012-05-10'
+     and utm_source = 'gsearch'
+     and utm_campaign = 'nonbrand'
+     group by year(created_at),
+              week(created_at) ;
+
+
 
 
 

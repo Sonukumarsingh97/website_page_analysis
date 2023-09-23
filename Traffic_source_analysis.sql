@@ -53,6 +53,24 @@ select
      group by year(created_at),
               week(created_at) ;
 
+/* device type conversion_rate*/
+/* gsearch nonbrand is fairly sensitive to bid changes and its impotant source of traffic as well. 
+so manager decided to find some other way now he is looking the conversion rate device wise to bid optimize. 
+in this step will find cvr_rate device wise, date limit 2012-05-11 */
+
+select device_type,
+      count(distinct website_sessions.website_session_id) as sessions,
+      count(distinct orders.order_id) as orders,
+      count(distinct orders.order_id)/
+      count(distinct website_sessions.website_session_id) as conv_rate
+ from website_sessions
+ left join orders
+ on website_sessions.website_session_id=orders.website_session_id
+ where website_sessions.created_at < '2012-05-11'
+ and utm_source='gsearch'
+ and utm_campaign='nonbrand'
+ group by device_type;             
+
 
 
 

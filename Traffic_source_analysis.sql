@@ -36,7 +36,7 @@ from website_sessions
 		and utm_source='gsearch'
         and utm_campaign='nonbrand';
 
-/* trande analysis to see the impact after bid down*/
+/* trend analysis to see the impact after bid down*/
 /* Based on conversion rate analysis manager decided to bid down for the gsearch nonbrand 
 Now will have to find out the impact of that, In this step will looke at the trend after bid down by week
 date limit 2012-05-10 */
@@ -71,7 +71,23 @@ select device_type,
  and utm_campaign='nonbrand'
  group by device_type;             
 
-
+ /* trend analysis for device type afer bid up */
+ /*After device_level_analysis of conv_rate manager realized desktop was doing well.
+ so he decided to bid up for that on 2012-05-19.now he is looking for weekly trends
+  for both mobile and desktop so he can see the impact on volume use date 2012-04-15
+  until the bid change as a baseline.*/
+  
+  select
+	
+       min(date (created_at)) as week_start_date,
+       count(distinct case when device_type = 'desktop' then website_session_id else null end ) as dtop_sessions,
+       count(distinct case when device_type = 'mobile' then website_session_id else null end ) as mob_sessions 
+       from website_sessions
+       where created_at <'2012-06-19'
+       and created_at > '2012-04-15'
+       and utm_source='gsearch'
+       and utm_campaign= 'nonbrand'
+       group by year(created_at),week(created_at) ;
 
 
 

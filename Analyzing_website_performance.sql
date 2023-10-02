@@ -103,3 +103,79 @@ FROM
         LEFT JOIN
     bounced_sessions ON sessions_w_home_landing_page.website_session_id = bounced_sessions.website_session_id
 GROUP BY landing_page;
+
+
+
+/* A-B split test of landing page */
+
+/* step 1) find out the first date and pageview_id when the first lander 2 get active
+   step 2) find the first pageview id for each session
+   step 3) cennect session with the landing page 
+   step 4) count the pageview_id
+   step 5) summarise the count by the landing page */
+   
+  /* step 1 */
+ 
+ select website_pageview_id,
+      min(created_at)
+      from website_pageviews
+      where pageview_url='/lander-1'
+      group by 1 ;
+      
+ /* step 2 */
+  create temporary table min_pageview
+ select website_pageviews.website_session_id,
+		min(website_pageview_id) as first_pageview
+        from website_pageviews
+		inner join website_sessions
+        on website_pageviews.website_session_id=website_sessions.website_session_id
+        where website_pageviews.website_pageview_id >=23504
+        and website_sessions.created_at < '2012-07-28'
+        and utm_source = 'gsearch'
+        and utm_campaign = 'nonbrand'
+        group by 1 ;
+        
+/* step 3 */ 
+ create temporary table session_w_landing_page
+select min_pageview.website_session_id,
+      website_pageviews.pageview_url as landing_page
+      from min_pageview 
+      left join website_pageviews
+      on  min_pageview.website_session_id=website_pageviews.website_session_id
+      where website_pageviews.pageview_url IN ('/home', '/lander-1');
+      
+  /*step 4 */
+  create temporary table bounced_session
+ select session_w_landing_page.website_session_id,
+        session_w_landing_page.landing_page,
+        count(website_pageviews.website_pageview_id) as count_of_pageview
+        from session_w_landing_page
+        left join website_pageviews
+        on session_w_landing_page.website_session_id= website_pageviews.website_session_id
+        group by 1,2 
+        having  count(website_pageviews.website_pageview_id)= 1;
+        
+        
+/* step 5 */
+select session_w_landing_page.landing_page as landing_pages,
+       count(distinct session_w_landing_page.website_session_id) as sessions,
+       count(distinct bounced_session.website_session_id) as bounced_sessions,
+       count(distinct bounced_session.website_session_id)/
+        count(distinct session_w_landing_page.website_session_id) as bounced_rate
+       from session_w_landing_page
+       left join bounced_session
+       on bounced_session.website_session_id=session_w_landing_page.website_session_id
+       group by 1;
+       
+
+
+
+
+
+
+
+
+
+
+
+

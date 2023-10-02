@@ -170,7 +170,53 @@ select session_w_landing_page.landing_page as landing_pages,
 
 
 
+/* landing page trend analysis */
 
+/* step 1 finding the first website_pageview_id for relevent sessions 
+   step 2 identifying the landing page of each session
+   step 3 counting pageviews for each session,to identify "bounces"
+   step 4 summarizing by week (bounce rate, sessions to each lander) */
+   
+/* step 1 and 3 */
+create temporary table session_w_min_pv_id_and_view_count
+select website_pageviews.website_session_id,
+      min(website_pageviews.website_pageview_id) as first_pageview_id,
+      count(website_pageviews.website_pageview_id) as count_pageviews
+      from website_sessions
+      left join website_pageviews
+      on website_pageviews.website_session_id=website_sessions.website_session_id
+      where website_sessions.created_at> '2012-06-01'
+      and website_sessions.created_at<'2012-08-31'
+      and website_sessions.utm_source= 'gsearch'
+      and website_sessions.utm_campaign='nonbrand'
+      group by website_sessions.website_session_id;
+ 
+ /* step 2 */
+ create temporary table sessions_w_counts_lander_and_created_at
+select session_w_min_pv_id_and_view_count.website_session_id,
+       session_w_min_pv_id_and_view_count.first_pageview_id,
+       session_w_min_pv_id_and_view_count.count_pageviews,
+       website_pageviews.pageview_url as landing_page,
+       website_pageviews.created_at as session_created_at
+       from session_w_min_pv_id_and_view_count
+       left join website_pageviews
+       on session_w_min_pv_id_and_view_count.website_session_id=website_pageviews.website_session_id
+       where website_pageviews.pageview_url IN ('/home','/lander-1');
+       
+       
+/* step 4 */
+
+select -- yearweek(session_created_at) as year_week,
+       min(date(session_created_at)) as week_start_date,
+       -- count(distinct website_session_id) as total_session,
+       count(distinct case when count_pageviews = 1 then website_session_id else null end ) as bounced_session,
+       count(distinct case when count_pageviews = 1 then website_session_id else null end )/
+	   count(distinct website_session_id) as bounced_rate,
+       count(distinct case when landing_page = '/home' then website_session_id else null end) as home_session,
+       count(distinct case when landing_page = '/lander-1' then website_session_id else null end) as lander_sessions
+       from sessions_w_counts_lander_and_created_at
+       group by 
+       yearweek(session_created_at);
 
 
 

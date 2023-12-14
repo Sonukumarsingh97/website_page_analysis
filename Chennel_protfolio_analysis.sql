@@ -111,5 +111,5 @@ select
   group by 
   year(created_at),
   month(created_at)
-  ;
+  ; 
      
